@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flas_jwt import JWT, jwt_required, current_identity
 import requests
 import json
 import bleach
@@ -14,7 +15,7 @@ db = client.drink
 #time format stored as year,month,day,hour,minute
 def emptyPersonObject():
     #using utc time for all timestamps. Can change later
-    currentTime = time.strftime('%s')
+    currentTime = time.time()
     person = {
         'dateofbirth' : '' ,
         'name' : '' ,
@@ -26,8 +27,21 @@ def emptyPersonObject():
 
     return person
 
+def authenticate(email, password):
+    user_table = db.user
+    check = user_table.find_one({'email' : email})
+    if check and check['password'] == password:
+        return check['email']
+    else:
+        jsonify({'failure' : 'Failed to Login'})
+
+def identity(payload):
+    email = payload['identity']
+    return email
+    
+
 def createNewNight():
-    currentTime = time.strftime('%s')
+    currentTime = time.time()
     night = {
         'date' : currentTime,
         'numberOfDrinks' : 0,
@@ -39,7 +53,7 @@ def createNewNight():
 
 def getTonight(nightObjects, todayDate):
     for night in nightObjects:
-        nightTime = datetime.datetime.fromtimestamp(int(night['data']))
+        nightTime = datetime.datetime.utcfromtimestamp(int(night['data']))
         if nightTime.year == todayDate.year and nightTime.month == todayDate.month and nightTime.day == todayDate.day:
             return night
     return None
@@ -148,7 +162,7 @@ def setNight():
 
     #now add the new drinks to our night and update it in the database
     newDrinkType = data['drink']
-    newDrinkTime = time.strftime('%s')
+    newDrinkTime = time.time()
     tonight['numberOfDrinks'] += 1
     tonight['drinks'].append({'drinkType' : newDrink, 'drinkTime' : newDrinkTime})
 
@@ -168,6 +182,12 @@ def getWeekData():
 
     userTable = db.user
     nightTable = db.night
+
+app = Flask(__name__)
+app.debug = True
+app.config['SECRET_KEY'] = 'secret'
+
+jwt = JWT(app, authenticate, identity)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
