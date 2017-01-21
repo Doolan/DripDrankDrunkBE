@@ -213,7 +213,7 @@ def getWeekData():
 
     # if a start date was not passed in we find the most recent sunday and send states for nights until today
     #assume date is passed in the form year,month,day
-    dayNumber = datetime.datetime.today.weekday() + 1
+    dayNumber = datetime.datetime.today().weekday() + 1
     currentDT = datetime.datetime.utcnow()
 
     #if it is before noon we will roll back to previous day anyways so no need for the modifier
