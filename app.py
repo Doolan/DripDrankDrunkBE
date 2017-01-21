@@ -33,10 +33,23 @@ def emptyPersonObject():
 
     return person
 
+#rounds the current date down to the most recent noon + 1 minute
+#takes in a datetime object to normalize
+def normalizeDateTime(dt):
+    if dt.hour <= 12 and not (dt.hour == 12 and dt.minute > 0):
+        dayChange = 1
+    return (dt - datetime.timedelta(day=dayChange, hour=dt.hour, minute=dt.minute))  + datetime.timedelta(hour=12,minute=1)
+
 def createNewNight():
-    currentTime = time.time()
+    newStartDT = normalizeDateTime(datetime.datetime.utcnow())
+    newEndDT = (newStartDT + datetime.timedelta(hour=23, minute=59))
+
+    newStartTimestamp = newStartDT.timestamp() 
+    newEndTimestamp = newEndDT.timestamp()
+
     night = {
-        'date' : currentTime,
+        'dateStart' : newStartTimestamp,
+        'dateEnd' : newEndTimestamp,
         'numberOfDrinks' : 0,
         'personID' : '',
         'drinkBreakdown' : []
@@ -44,16 +57,14 @@ def createNewNight():
 
     return night
 
-def getTonight(nightObjects, todayDate):
+def getTonight(nightObjects):
+    currentTime = time.time()
     for night in nightObjects:
-        nightTime = datetime.datetime.utcfromtimestamp(int(night['data']))
-        if nightTime.year == todayDate.year and nightTime.month == todayDate.month and nightTime.day == todayDate.day:
+        if currentTime >= night['dateStart'] and currentTime <= night['dateEnd']:
             return night
     return None
 
-
 #TODO Update all database interactions to use transactions, so if some operation fails the entire thing aborts
-
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -159,9 +170,8 @@ def setNight():
     personID = userObject['personID']
 
     # get current time and all night objects associated with a personID. Then uses that data to match a night with today's night if it exists
-    currentTime = datetime.datetime.utcnow()
     allNightObjects = nightTable.find({'personID' : personID})
-    tonight = getTonight(allNightObjects, currentTime)
+    tonight = getTonight(allNightObjects)
     if tonight == None:
         tonight = createNewNight()
         nightId = nightTable.insert_one(tonight)
@@ -178,26 +188,35 @@ def setNight():
 
     return jsonify({'success' : 'successfully updated night data'})  
 
-
-#TODO figure out what to do when no start date is passed
+#if start date not sent use previous sunday
+#start dates will always be sunday
 @app.route('/getWeekData', methods=['POST'])
 @jwt_required
 def getWeekData():
     if request.method != 'POST':
         return jsonify({'failure' : 'incorrect request format'})
 
+    email = get_jwt_identity()
     data = request.get_json()
-
     userTable = db.user
     nightTable = db.night
-    email = get_jwt_identity()
+
+#     newStartDT = (currentDT - datetime.timedelta(day=dayChange, hour=currentDT.hour, minute=currentDT.minute))  + datetime.timedelta(hour=12,minute=1)
+#     newEndDT = (newStartDT + datetime.timedelta(hour=23, minute=59))
+
+    # if a start date was not passed in we find the most recent sunday and send states for nights until today
+    if not 'startDate' in data.keyset():
+        dayNumber = datetime.datetime.today.weekday() + 1
+        startDate = datetime.datetime.utcnow() - timedelta(days=dayNumber)
 
 
-@app.route('/jwt_testing')
-@jwt_required
-def jwt_testing():
-    email = get_jwt_identity()
-    return jsonify({"success" : user}),200
+        
+
+# @app.route('/jwt_testing')
+# @jwt_required
+# def jwt_testing():
+#     email = get_jwt_identity()
+#     return jsonify({"success" : user}),200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
