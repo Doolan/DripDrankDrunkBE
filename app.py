@@ -239,7 +239,7 @@ def getWeekData():
     for i in range(0, dayNumber):
         currentDate += datetime.timedelta(days=i)
         currentTS = currentDate.timestamp()
-        weeklyDrinks[i] = 0
+        weeklyDrinks.append(0)
         for night in allNightObjects:
             if int(night['startDate']) <= currentTS and int(night['endDate']) >= currentTS:
                 weeklyDrinks[i] = night['numberOfDrinks']
