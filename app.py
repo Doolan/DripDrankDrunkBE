@@ -221,7 +221,7 @@ def getWeekData():
         dayNumber -= 1
 
     if not 'startDate' in data.keys():
-        startDate = normalizeDateTime(datetime.datetime.utcnow() - timedelta(days=dayNumber))
+        startDate = normalizeDateTime(datetime.datetime.utcnow() - datetime.timedelta(days=dayNumber))
 
     else:
         timestring = data['timestring']
@@ -237,7 +237,7 @@ def getWeekData():
     breakdown = {'wine' : 0, 'liquor' : 0, 'beer' : 0, 'mixed' : 0 }
     totalDrinks = 0
     for i in range(0, dayNumber):
-        currentDate += timedelta(days=i)
+        currentDate += datetime.timedelta(days=i)
         currentTS = currentDate.timestamp()
         weeklyDrinks[i] = 0
         for night in allNightObjects:
