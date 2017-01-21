@@ -71,7 +71,7 @@ def setUserData():
         return jsonify({'failure' : 'incorrect request format'})
     
     #some setup
-    fieldsTracked = ['age', 'name', 'sex', 'height', 'weight']
+    fieldsTracked = ['dateofbirth', 'name', 'sex', 'height', 'weight']
     data = request.get_json()
 
     userTable = db.user
