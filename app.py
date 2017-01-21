@@ -25,10 +25,19 @@ def createAccount():
         return jsonify({'failure' : 'incorrect request format'})
 
     data = request.get_json()
+    newUserEmail = data['email']
+    newUserPassword = data['password']
 
     userTable = db.user
-    newUser = {'email' : data['email'], 'password' : data['password']}
-    # newUser = {'email' : 'fuck', 'password' : 'you'}
+
+    #checking to make sure 
+    existingUser = userTable.find_one({'email' : newUserEmail})
+    if existingUser not None:
+        print 'User already exists in database. The result of the query looks like:'
+        print existingUser
+        return jsonify({'failure' : 'user already exists'})
+
+    newUser = {'email' : newUserEmail, 'password' : newUserPassword}
     success = userTable.insert_one(newUser)
     # if success != 
     #     return jsonify({'failure' : 'data insertion failure'})
