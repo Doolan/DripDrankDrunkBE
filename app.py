@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from flask_jwt import JWT, jwt_required, current_identity
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 import requests
 import json
 import bleach
@@ -12,6 +12,26 @@ app = Flask(__name__)
 client = pymongo.MongoClient("mongodb://venerdm:Rose!2@drankonline-shard-00-00-ofd8a.mongodb.net:27017,drankonline-shard-00-01-ofd8a.mongodb.net:27017,drankonline-shard-00-02-ofd8a.mongodb.net:27017/admin?ssl=true&replicaSet=DrankOnline-shard-0&authSource=admin")
 db = client.drink
 
+app.debug = True
+app.secret_key = 'secret'
+
+jwt = JWTManager(app)
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    email  = bleach.clean(data['email'])
+    password = bleach.clean(data['password'])
+    user_table = db.user
+    check = user_table.find_one({'email' : email})
+    if check and check['password'] == password:
+        ret = {'access_token' : create_access_token(identity=email)}
+        return jsonify(ret), 200
+    else:
+        return jsonify({'failure' : 'Failed to Login'}), 401
+
+    
 #time format stored as year,month,day,hour,minute
 def emptyPersonObject():
     #using utc time for all timestamps. Can change later
@@ -27,18 +47,8 @@ def emptyPersonObject():
 
     return person
 
-def authenticate(email, password):
-    user_table = db.user
-    check = user_table.find_one({'email' : email})
-    if check and check['password'] == password:
-        return check['email']
-    else:
-        jsonify({'failure' : 'Failed to Login'})
 
-def identity(payload):
-    email = payload['identity']
-    return email
-    
+
 
 def createNewNight():
     currentTime = time.time()
@@ -97,9 +107,11 @@ def createAccount():
         return jsonify({'failure' : 'data insertion failure'})
     
     #TODO update this to also return the json token 
-    return jsonify({'success' : 'successfully added new user'})
+    ret = {'access_token' : create_access_token(identity=newUserEmail)}
+    return jsonify(ret), 200
 
 @app.route('/setUserData', methods=['POST'])
+@jwt_required
 def setUserData():
     if request.method != 'POST':
         return jsonify({'failure' : 'incorrect request format'})
@@ -113,10 +125,11 @@ def setUserData():
 
     #TODO update this to grab json token from request header
     #grab email from the sent data and get the personID associated with this email
-    if 'email' not in data.keys():
-        return jsonify({'failure' : 'user\'s email was not included with this request'})
+#    if 'email' not in data.keys():
+#        return jsonify({'failure' : 'user\'s email was not included with this request'})
 
-    userEmail = bleach.clean(data['email'])
+#    userEmail = bleach.clean(data['email'])
+    userEmail = get_jwt_identity()
     userObject = userTable.find_one({'email' : userEmail})
     personID = userObject['personID']
 
@@ -136,6 +149,7 @@ def setUserData():
 # assuming drinks are valid input
 # TODO do data validation
 @app.route('/setNight', methods=['POST'])
+@jwt_required
 def setNight():
     if request.method != 'POST':
         return jsonify({'failure' : 'incorrect request format'})
@@ -146,7 +160,7 @@ def setNight():
 
     # get user data - personID is one part of the data that can uniquely identify a night
     data = request.get_json()
-    email = bleach.clean(data['email'])
+    email = get_jwt_identity()
     userObject = userTable.find_one({'email' : email})
     personID = userObject['personID']
 
@@ -174,6 +188,7 @@ def setNight():
 #TODO figure out what to do when no start date is passed
 #TODO eliminate user from request
 @app.route('/getWeekData', methods=['POST'])
+@jwt_required
 def getWeekData():
     if request.method != 'POST':
         return jsonify({'failure' : 'incorrect request format'})
@@ -183,16 +198,12 @@ def getWeekData():
     userTable = db.user
     nightTable = db.night
 
-app = Flask(__name__)
-app.debug = True
-app.config['SECRET_KEY'] = 'secret'
-
-jwt = JWT(app, authenticate, identity)
 
 @app.route('/jwt_testing')
-@jwt_required()
+@jwt_required
 def jwt_testing():
-    return jsonify({"success" : current_identity})
+    email = get_jwt_identity()
+    return jsonify({"success" : user}),200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
