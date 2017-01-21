@@ -173,6 +173,8 @@ def setNight():
     userObject = userTable.find_one({'email' : email})
     personID = userObject['personID']
 
+    print ('setNight, requesting personID is: ' + str(personID))
+
     # get current time and all night objects associated with a personID. Then uses that data to match a night with today's night if it exists
     allNightObjects = nightTable.find({'personID' : personID})
     tonight = getTonight(allNightObjects)
