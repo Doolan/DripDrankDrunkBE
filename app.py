@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from flas_jwt import JWT, jwt_required, current_identity
+from flask_jwt import JWT, jwt_required, current_identity
 import requests
 import json
 import bleach
@@ -192,7 +192,7 @@ jwt = JWT(app, authenticate, identity)
 @app.route('/jwt_testing')
 @jwt_required()
 def jwt_testing():
-    return jsonify("success" : current_identity)
+    return jsonify({"success" : current_identity})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
