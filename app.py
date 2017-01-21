@@ -17,20 +17,6 @@ app.secret_key = 'secret'
 
 jwt = JWTManager(app)
 
-
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    email  = bleach.clean(data['email'])
-    password = bleach.clean(data['password'])
-    user_table = db.user
-    check = user_table.find_one({'email' : email})
-    if check and check['password'] == password:
-        ret = {'access_token' : create_access_token(identity=email)}
-        return jsonify(ret), 200
-    else:
-        return jsonify({'failure' : 'Failed to Login'}), 401
-
     
 #time format stored as year,month,day,hour,minute
 def emptyPersonObject():
@@ -71,6 +57,19 @@ def getTonight(nightObjects, todayDate):
 
 #TODO Update all database interactions to use transactions, so if some operation fails the entire thing aborts
 
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    email  = bleach.clean(data['email'])
+    password = bleach.clean(data['password'])
+    user_table = db.user
+    check = user_table.find_one({'email' : email})
+    if check and check['password'] == password:
+        ret = {'access_token' : create_access_token(identity=email)}
+        return jsonify(ret), 200
+    else:
+        return jsonify({'failure' : 'Failed to Login'}), 401
+
 @app.route('/')
 def main():
     return 'Hello, world!'
@@ -106,7 +105,6 @@ def createAccount():
     if not result.acknowledged:
         return jsonify({'failure' : 'data insertion failure'})
     
-    #TODO update this to also return the json token 
     ret = {'access_token' : create_access_token(identity=newUserEmail)}
     return jsonify(ret), 200
 
@@ -123,7 +121,6 @@ def setUserData():
     userTable = db.user
     personTable = db.person
 
-    #TODO update this to grab json token from request header
     #grab email from the sent data and get the personID associated with this email
 #    if 'email' not in data.keys():
 #        return jsonify({'failure' : 'user\'s email was not included with this request'})
@@ -186,7 +183,6 @@ def setNight():
 
 
 #TODO figure out what to do when no start date is passed
-#TODO eliminate user from request
 @app.route('/getWeekData', methods=['POST'])
 @jwt_required
 def getWeekData():
@@ -197,6 +193,7 @@ def getWeekData():
 
     userTable = db.user
     nightTable = db.night
+    email = get_jwt_identity()
 
 
 @app.route('/jwt_testing')
