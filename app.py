@@ -33,9 +33,6 @@ def emptyPersonObject():
 
     return person
 
-
-
-
 def createNewNight():
     currentTime = time.time()
     night = {
