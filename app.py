@@ -65,7 +65,7 @@ def createAccount():
     #TODO update this to also return the json token 
     return jsonify({'success' : 'successfully added new user'})
 
-@app.rought('/setUserData', methods=['POST'])
+@app.route('/setUserData', methods=['POST'])
 def setUserData():
     if request.method != 'POST':
         return jsonify({'failure' : 'incorrect request format'})
