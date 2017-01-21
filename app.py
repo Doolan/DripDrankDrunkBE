@@ -158,7 +158,7 @@ def setUserData():
         
     return jsonify({'success' : 'successfully updated person data'})  
 
-@app.route('/getBio', methods=['POST'])
+@app.route('/getBio', methods=['GET'])
 @jwt_required
 def getBio():
     userTable = db.user
