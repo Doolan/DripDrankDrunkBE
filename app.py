@@ -241,7 +241,7 @@ def getWeekData():
         currentTS = currentDate.timestamp()
         weeklyDrinks.append(0)
         for night in allNightObjects:
-            if int(night['startDate']) <= currentTS and int(night['endDate']) >= currentTS:
+            if int(night['dateStart']) <= currentTS and int(night['dateEnd']) >= currentTS:
                 weeklyDrinks[i] = night['numberOfDrinks']
                 totalDrinks += night['numberOfDrinks']
                 for drink in night['drinks']:
