@@ -32,7 +32,7 @@ def createAccount():
 
     #checking to make sure 
     existingUser = userTable.find_one({'email' : newUserEmail})
-    if existingUser not None:
+    if existingUser != None:
         print 'User already exists in database. The result of the query looks like:'
         print existingUser
         return jsonify({'failure' : 'user already exists'})
