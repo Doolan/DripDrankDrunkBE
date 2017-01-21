@@ -5,6 +5,8 @@ import json
 import bleach
 import time
 import datetime
+import hashlib
+from math import ceil
 from twilio.rest import TwilioRestClient
 
 import pymongo
@@ -220,6 +222,30 @@ def setNight():
 
     return jsonify({'success' : 'successfully updated night data'})  
 
+@app.route('/batch',methods=['POST'])
+def batch():
+    nightTable = db.night
+    personTable = db.person
+    people = personTable.find()
+
+    for person in people:
+        nights = nightTable.find({'personID' : person['_id']})
+        values = [0 for x in range(7)]
+        minDate = 10000000000000
+        maxDate = 0
+        for night in nights:
+            minDate = min(minDate,night['dateStart'])
+            maxDate = max(maxDate,night['dateStart'])
+            day = datetime.datetime.utcfromtimestamp(night['dateStart']).weekday()
+            values[day]+=night['numberOfDrinks']
+        weeks = max(1,ceil((maxDate-minDate)/(7*24*60*60)))
+        person['weekAverage'] = [value/weeks for value in values]
+        personTable.find_one_and_update({'_id' : person['_id']}, {'$set' : person})
+
+    return jsonify({'success' : 'succesfully ran batch job'})
+            
+
+    
 @app.route('/textDD', methods=['POST'])
 @jwt_required
 def text_dd():
