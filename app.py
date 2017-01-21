@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import requests
 import json
 import bleach
+import time
 import datetime
 
 import pymongo
@@ -13,18 +14,36 @@ db = client.drink
 #time format stored as year,month,day,hour,minute
 def emptyPersonObject():
     #using utc time for all timestamps. Can change later
-    currentTime = datetime.datetime.utcnow()
-    dtString = '%s,%s,%s,%s,%s' % (currentTime.year, currentTime.month, currentTime.day, currentTime.hour, currentTime.minute)
+    currentTime = time.strftime('%s')
     person = {
         'dateofbirth' : '' ,
         'name' : '' ,
         'sex' : '', 
         'height' : '',
         'weight' : '',
-        'registration' : dtString
+        'registration' : currentTime
     }
 
     return person
+
+def createNewNight():
+    currentTime = time.strftime('%s')
+    night = {
+        'date' : currentTime,
+        'numberOfDrinks' : 0,
+        'personID' : '',
+        'drinkBreakdown' : []
+    }
+
+    return night
+
+def getTonight(nightObjects, todayDate):
+    for night in nightObjects:
+        nightTime = datetime.datetime.fromtimestamp(int(night['data']))
+        if nightTime.year == todayDate.year and nightTime.month == todayDate.month and nightTime.day == todayDate.day:
+            return night
+    return None
+
 
 #TODO Update all database interactions to use transactions, so if some operation fails the entire thing aborts
 
@@ -32,6 +51,7 @@ def emptyPersonObject():
 def main():
     return 'Hello, world!'
 
+#TODO implement password hashing
 # API endpoint for creating a new user 
 @app.route('/newUser', methods=['POST'])
 def createAccount():
@@ -89,12 +109,65 @@ def setUserData():
     #now use the person object to update all of the fields that were sent
     for key in data.keys():
         if key in fieldsTracked:
-            result = personTable.find_one_and_update({'_id' : personID}, {'$set':{key : bleach.clean(data[key])}})
+            result = personTable.find_one_and_update({'_id' : personID}, {'$set': {key : bleach.clean(data[key])}})
             
             if result is None:
                 return jsonify({'failure' : 'data update failure'})
         
-    return jsonify({'success' : 'successfully added new user'})    
+    return jsonify({'success' : 'successfully updated person data'})  
+
+# adds a new night to db, or updates if already in db
+# night has personID, date, # of drinks, breakdown of drinks
+# can only set data regarding the current day's night 
+# assuming drinks are valid input
+# TODO do data validation
+@app.route('/setNight', methods=['POST'])
+def setNight():
+    if request.method != 'POST':
+        return jsonify({'failure' : 'incorrect request format'})
+
+    # init database tables
+    nightTable = db.night
+    userTable = db.user
+
+    # get user data - personID is one part of the data that can uniquely identify a night
+    data = request.get_json()
+    email = bleach.clean(data['email'])
+    userObject = userTable.find_one({'email' : email})
+    personID = userObject['personID']
+
+    # get current time and all night objects associated with a personID. Then uses that data to match a night with today's night if it exists
+    currentTime = datetime.datetime.utcnow()
+    allNightObjects = nightTable.find({'personID' : personID})
+    tonight = getTonight(allNightObjects, currentTime)
+    if tonight == None:
+        tonight = createNewNight()
+        nightId = nightTable.insert_one(tonight)
+    else:
+        nightId = tonight['_id']
+
+    #now add the new drinks to our night and update it in the database
+    newDrinkType = data['drink']
+    newDrinkTime = time.strftime('%s')
+    tonight['numberOfDrinks'] += 1
+    tonight['drinks'].append({'drinkType' : newDrink, 'drinkTime' : newDrinkTime})
+
+    nightTable.find_one_and_update({'_id' : nightId}, {'$set' : tonight})
+
+    return jsonify({'success' : 'successfully updated night data'})  
+
+
+#TODO figure out what to do when no start date is passed
+#TODO eliminate user from request
+@app.route('/getWeekData', methods=['POST'])
+def getWeekData():
+    if request.method != 'POST':
+        return jsonify({'failure' : 'incorrect request format'})
+
+    data = request.get_json()
+
+    userTable = db.user
+    nightTable = db.night
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
