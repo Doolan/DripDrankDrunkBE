@@ -37,6 +37,7 @@ def emptyPersonObject():
 #rounds the current date down to the most recent noon + 1 minute
 #takes in a datetime object to normalize
 def normalizeDateTime(dt):
+    dayChange = 0
     if dt.hour <= 12 and not (dt.hour == 12 and dt.minute > 0):
         dayChange = 1
     return (dt - datetime.timedelta(days=dayChange, hours=dt.hour, minutes=dt.minute))  + datetime.timedelta(hours=12,minutes=1)
