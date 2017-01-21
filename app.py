@@ -237,7 +237,7 @@ def getWeekData():
     breakdown = {'wine' : 0, 'liquor' : 0, 'beer' : 0, 'mixed' : 0 }
     totalDrinks = 0
     for i in range(0, dayNumber):
-        currentDate += datetime.timedelta(days=i)
+        currentDate = startDate + datetime.timedelta(days=i)
         currentTS = currentDate.timestamp()
         weeklyDrinks.append(0)
         for night in allNightObjects:
