@@ -29,7 +29,7 @@ def createAccount():
     userTable = db.user
     # newUser = {'email' : data['email'], 'password' : data['password']}
     newUser = {'email' : 'fuck', 'password' : 'you'}
-    success = userTable.insert_one(userTable)
+    success = userTable.insert_one(newUser)
     # if success != 
     #     return jsonify({'failure' : 'data insertion failure'})
     return jsonify({'success' : 'successfully added new user'})
