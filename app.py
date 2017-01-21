@@ -220,7 +220,7 @@ def getWeekData():
     if currentDT.hour < 12 or (currentDT.hour == 12 and currentDT.minute == 0):
         dayNumber -= 1
 
-    if not 'startDate' in data.keyset():
+    if not 'startDate' in data.keys():
         startDate = normalizeDateTime(datetime.datetime.utcnow() - timedelta(days=dayNumber))
 
     else:
