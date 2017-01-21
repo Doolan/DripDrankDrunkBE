@@ -28,6 +28,7 @@ def emptyPersonObject():
         'sex' : '', 
         'height' : '',
         'weight' : '',
+        'weekAverage' : [0,0,0,0,0,0,0],
         'registration' : currentTime
     }
 
@@ -38,11 +39,11 @@ def emptyPersonObject():
 def normalizeDateTime(dt):
     if dt.hour <= 12 and not (dt.hour == 12 and dt.minute > 0):
         dayChange = 1
-    return (dt - datetime.timedelta(day=dayChange, hour=dt.hour, minute=dt.minute))  + datetime.timedelta(hour=12,minute=1)
+    return (dt - datetime.timedelta(days=dayChange, hours=dt.hour, minutes=dt.minute))  + datetime.timedelta(hours=12,minutes=1)
 
 def createNewNight():
     newStartDT = normalizeDateTime(datetime.datetime.utcnow())
-    newEndDT = (newStartDT + datetime.timedelta(hour=23, minute=59))
+    newEndDT = (newStartDT + datetime.timedelta(hours=23, minutes=59))
 
     newStartTimestamp = newStartDT.timestamp() 
     newEndTimestamp = newEndDT.timestamp()
@@ -63,6 +64,8 @@ def getTonight(nightObjects):
         if currentTime >= night['dateStart'] and currentTime <= night['dateEnd']:
             return night
     return None
+
+
 
 #TODO Update all database interactions to use transactions, so if some operation fails the entire thing aborts
 @app.route('/login', methods=['POST'])
@@ -190,27 +193,67 @@ def setNight():
 
 #if start date not sent use previous sunday
 #start dates will always be sunday
+# start dates will be sent as year,month,day in parameter timestring
 @app.route('/getWeekData', methods=['POST'])
 @jwt_required
 def getWeekData():
     if request.method != 'POST':
         return jsonify({'failure' : 'incorrect request format'})
 
-    email = get_jwt_identity()
     data = request.get_json()
     userTable = db.user
+    personTable = db.person
     nightTable = db.night
 
-#     newStartDT = (currentDT - datetime.timedelta(day=dayChange, hour=currentDT.hour, minute=currentDT.minute))  + datetime.timedelta(hour=12,minute=1)
-#     newEndDT = (newStartDT + datetime.timedelta(hour=23, minute=59))
+    email = get_jwt_identity()
+    userObject = userTable.find_one({'email' : email})
+    personID = userObject['personID']
 
     # if a start date was not passed in we find the most recent sunday and send states for nights until today
+    #assume date is passed in the form year,month,day
+    dayNumber = datetime.datetime.today.weekday() + 1
+    currentDT = datetime.datetime.utcnow()
+
+    #if it is before noon we will roll back to previous day anyways so no need for the modifier
+    if currentDT.hour < 12 or (currentDT.hour == 12 and currentDT.minute == 0):
+        dayNumber -= 1
+
     if not 'startDate' in data.keyset():
-        dayNumber = datetime.datetime.today.weekday() + 1
-        startDate = datetime.datetime.utcnow() - timedelta(days=dayNumber)
+        startDate = normalizeDateTime(datetime.datetime.utcnow() - timedelta(days=dayNumber))
 
+    else:
+        timestring = data['timestring']
+        timearray = timestring.split[',']
+        startDate = datetime.datetime(int(timearray[0]), int(timearray[1]), int(timearray[2]), 12, 1, 0)
+        dayNumber = 7
 
-        
+    #loop through the amount of days we rolled backed, query for the data, and return it
+    #this is n^2 when it could be n but whatever
+    allNightObjects = nightTable.find({'personID' : personID})
+    currentDate = startDate
+    weeklyDrinks = []
+    breakdown = {'wine' : 0, 'liquor' : 0, 'beer' : 0, 'mixed' : 0 }
+    totalDrinks = 0
+    for i in range(0, dayNumber):
+        currentDate += timedelta(days=i)
+        currentTS = currentDate.timestamp()
+        weeklyDrinks[i] = 0
+        for night in allNightObjects:
+            if int(night['startDate']) <= currentTS and int(night['endDate']) >= currentTS:
+                weeklyDrinks[i] = night['numberOfDrinks']
+                totalDrinks += night['numberOfDrinks']
+                for drink in night['drinks']:
+                    breakdown[drink['drinkType']] += 1
+                break
+
+    personObject = personTable.find({'_id' : personID})
+    weekAverage = personObject['weekAverage']
+
+    weekData = {'drinks' : weeklyDrinks, 'breakdown' : breakdown}
+    weekAverage = {'drinks' : weekAverage}
+
+    return jsonify({'success' : {'weekData' : weekData, 'weekAverage' : weekAverage}})
+    
 
 # @app.route('/jwt_testing')
 # @jwt_required
