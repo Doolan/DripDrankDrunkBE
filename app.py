@@ -248,7 +248,7 @@ def getWeekData():
                     breakdown[drink['drinkType']] += 1
                 break
 
-    personObject = personTable.find({'_id' : personID})
+    personObject = personTable.find_one({'_id' : personID})
     weekAverage = personObject['weekAverage']
 
     weekData = {'drinks' : weeklyDrinks, 'breakdown' : breakdown}
