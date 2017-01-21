@@ -91,7 +91,7 @@ def setUserData():
         if key in fieldsTracked:
             result = personTable.find_one_and_update({'_id' : personID}, {'$set':{key : bleach.clean(data[key])}})
             
-            if not result.acknowledged:
+            if result is None:
                 return jsonify({'failure' : 'data update failure'})
         
     return jsonify({'success' : 'successfully added new user'})    
