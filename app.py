@@ -5,6 +5,7 @@ import json
 import bleach
 import time
 import datetime
+from twilio.rest import TwilioRestClient
 
 import pymongo
 
@@ -14,6 +15,10 @@ db = client.drink
 
 app.debug = True
 app.secret_key = 'secret'
+
+account = 'AC2c47cf85a53d0a61e129d2a27497cd61'
+token = 'fadff4670cdae887fa72064ba3db6ee1'
+client = TwilioRestClient(account,token)
 
 jwt = JWTManager(app)
 
@@ -54,7 +59,8 @@ def createNewNight():
         'dateEnd' : newEndTimestamp,
         'numberOfDrinks' : 0,
         'personID' : '',
-        'drinkBreakdown' : []
+        'drinkBreakdown' : [],
+        'dd_number' : ''
     }
 
     return night
@@ -152,6 +158,25 @@ def setUserData():
         
     return jsonify({'success' : 'successfully updated person data'})  
 
+@app.route('/getBio', methods=['POST'])
+@jwt_required
+def getBio():
+    userTable = db.user
+    personTable = db.person
+
+    email = get_jwt_identity()
+    user = userTable.find_one({'email' : email})
+
+    personID = user['personID']
+    person = personTable.find_one({'_id' : personID})
+    
+    height = person['height']
+    sex = person['sex']
+    weight = person['weight']
+
+    return jsonify({'height' : height,'sex' : sex,'weight' : weight}), 200
+
+
 # adds a new night to db, or updates if already in db
 # night has personID, date, # of drinks, breakdown of drinks
 # can only set data regarding the current day's night 
@@ -187,11 +212,34 @@ def setNight():
     newDrinkType = data['drink']
     newDrinkTime = time.time()
     tonight['numberOfDrinks'] += 1
+    if 'dd_number' in data.keys():
+        tonight['dd_number'] = data['dd_number']
     tonight['drinkBreakdown'].append({'drinkType' : newDrinkType, 'drinkTime' : newDrinkTime})
 
     nightTable.find_one_and_update({'_id' : nightId}, {'$set' : tonight})
 
     return jsonify({'success' : 'successfully updated night data'})  
+
+@app.route('/textDD', methods=['POST'])
+@jwt_required
+def text_dd():
+    nightTable = db.night
+    personTable = db.person
+    userTable = db.user
+    email = get_jwt_identity()
+    userObject = userTable.find_one({'email' : email})
+    personID = userObject['personID']
+    person = personTable.find_one({'_id' : personID})
+    name = person['name']
+    allNightObjects = nightTable.find({'personID' : personID})
+    tonight = getTonight(allNightObjects)
+    if tonight == None or 'dd_number' not in tonight.keys():
+        return jsonify({'failure' : 'unable to text dd'})
+    dd_number = tonight['dd_number']
+    message = client.messages.create(to=dd_number, from_='+12816728234',body='Your Friend ' + name+ ' is drunk, please keep an eye on them and make sure they get home safe!')
+    return jsonify({'success' : 'dd texted'})
+
+
 
 #if start date not sent use previous sunday
 #start dates will always be sunday
@@ -221,33 +269,35 @@ def getWeekData():
         dayNumber -= 1
 
     if not 'startDate' in data.keys():
-        startDate = normalizeDateTime(datetime.datetime.utcnow() - datetime.timedelta(days=dayNumber))
+        startDate = normalizeDateTime(datetime.datetime.today() - datetime.timedelta(days=dayNumber))
 
     else:
-        timestring = data['timestring']
-        timearray = timestring.split[',']
+        timestring = data['startDate']
+        timearray = timestring.split(',')
         startDate = datetime.datetime(int(timearray[0]), int(timearray[1]), int(timearray[2]), 12, 1, 0)
         dayNumber = 7
 
     #loop through the amount of days we rolled backed, query for the data, and return it
     #this is n^2 when it could be n but whatever
     allNightObjects = nightTable.find({'personID' : personID})
+    allNightObjects = [x for x in allNightObjects]
     currentDate = startDate
     weeklyDrinks = []
-    breakdown = {'wine' : 0, 'liquor' : 0, 'beer' : 0, 'mixed' : 0 }
+    breakdown = {'wine' : 0, 'liquor' : 0, 'beer' : 0, 'mixed' : 0, 'shot' : 0}
     totalDrinks = 0
     for i in range(0, dayNumber):
         currentDate = startDate + datetime.timedelta(days=i)
         currentTS = currentDate.timestamp()
         weeklyDrinks.append(0)
         for night in allNightObjects:
-            if int(night['dateStart']) <= currentTS and int(night['dateEnd']) >= currentTS:
+            if night['dateStart'] <= currentTS and night['dateEnd'] > currentTS:
                 weeklyDrinks[i] = night['numberOfDrinks']
                 totalDrinks += night['numberOfDrinks']
-                for drink in night['drinks']:
+                for drink in night['drinkBreakdown']:
                     breakdown[drink['drinkType']] += 1
                 break
 
+    
     personObject = personTable.find_one({'_id' : personID})
     weekAverage = personObject['weekAverage']
 
