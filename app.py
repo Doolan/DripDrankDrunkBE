@@ -189,5 +189,10 @@ app.config['SECRET_KEY'] = 'secret'
 
 jwt = JWT(app, authenticate, identity)
 
+@app.route('/jwt_testing')
+@jwt_required()
+def jwt_testing():
+    return jsonify("success" : current_identity)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
