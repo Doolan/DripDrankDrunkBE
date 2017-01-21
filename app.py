@@ -186,7 +186,7 @@ def setNight():
     newDrinkType = data['drink']
     newDrinkTime = time.time()
     tonight['numberOfDrinks'] += 1
-    tonight['drinks'].append({'drinkType' : newDrink, 'drinkTime' : newDrinkTime})
+    tonight['drinkBreakdown'].append({'drinkType' : newDrink, 'drinkTime' : newDrinkTime})
 
     nightTable.find_one_and_update({'_id' : nightId}, {'$set' : tonight})
 
