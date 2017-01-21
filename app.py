@@ -24,23 +24,23 @@ def createAccount():
     if request.method != 'POST':
         return jsonify({'failure' : 'incorrect request format'})
 
+    # get data from user
     data = request.get_json()
     newUserEmail = data['email']
     newUserPassword = data['password']
 
+    #connect to user table
     userTable = db.user
 
     #checking to make sure 
     existingUser = userTable.find_one({'email' : newUserEmail})
     if existingUser != None:
-        print 'User already exists in database. The result of the query looks like:'
-        print existingUser
         return jsonify({'failure' : 'user already exists'})
 
     newUser = {'email' : newUserEmail, 'password' : newUserPassword}
     success = userTable.insert_one(newUser)
-    # if success != 
-    #     return jsonify({'failure' : 'data insertion failure'})
+    if success  is None:
+        return jsonify({'failure' : 'data insertion failure'})
     return jsonify({'success' : 'successfully added new user'})
 
 if __name__ == '__main__':
