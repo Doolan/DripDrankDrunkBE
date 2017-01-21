@@ -180,6 +180,7 @@ def setNight():
     tonight = getTonight(allNightObjects)
     if tonight == None:
         tonight = createNewNight()
+        tonight['personID'] = personID
         nightId = nightTable.insert_one(tonight).inserted_id
     else:
         nightId = tonight['_id']
