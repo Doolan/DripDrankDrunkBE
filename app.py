@@ -7,7 +7,7 @@ import pymongo
 # from flask.ext.pymongo import PyMongo
 
 app = Flask(__name__)
-client = pymongo.MongoClient("mongodb://venerdm:Rose!@drankonline-shard-00-00-ofd8a.mongodb.net:27017,drankonline-shard-00-01-ofd8a.mongodb.net:27017,drankonline-shard-00-02-ofd8a.mongodb.net:27017/admin?ssl=true&replicaSet=DrankOnline-shard-0&authSource=admin")
+client = pymongo.MongoClient("mongodb://venerdm:Rose!2@drankonline-shard-00-00-ofd8a.mongodb.net:27017,drankonline-shard-00-01-ofd8a.mongodb.net:27017,drankonline-shard-00-02-ofd8a.mongodb.net:27017/admin?ssl=true&replicaSet=DrankOnline-shard-0&authSource=admin")
 db = client.drink
 
 # app.config['MONGO_DBNAME'] = 
