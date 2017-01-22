@@ -47,6 +47,7 @@ def emptyPersonObject():
 #rounds the current date down to the most recent noon + 1 minute
 #takes in a datetime object to normalize
 def normalizeDateTime(dt):
+    return dt
     dayChange = 0
     if dt.hour <= 12 and not (dt.hour == 12 and dt.minute > 0):
         dayChange = 1
@@ -198,7 +199,7 @@ def needDD():
 
     return jsonify({"need" : 'dd_name' in tonight.keys()})
 
-@app.route('/getTonight',methods=['GET'])
+@app.route('/getTonight',methods=['POST'])
 @cross_origin()
 @jwt_required
 def getTonightResponse():
@@ -211,12 +212,14 @@ def getTonightResponse():
     allNightObjects = nightTable.find({'personID' : personID})
 
     data = request.get_json()
-    if 'date' in data.key():
+    if 'date' in data.keys():
         tonight = getTonight(allNightObjects, data['date'])
     else:
         tonight = getTonight(allNightObjects)
 
-    return jsonify(tonight)
+    tonight['_id'] = ''
+
+    return jsonify(tonight['drinkBreakdown'])
 
 
 
@@ -372,18 +375,18 @@ def getWeekData():
 
     #loop through the amount of days we rolled backed, query for the data, and return it
     #this is n^2 when it could be n but whatever
-    allNightObjects = nightTable.find({'personID' : personID})
+    allNightObjects = nightTable.find({'personID' : '588381b73ea3786f61f6bb44'})
     allNightObjects = [x for x in allNightObjects]
     currentDate = startDate
     weeklyDrinks = []
     breakdown = {'wine' : 0, 'liquor' : 0, 'beer' : 0, 'mixed' : 0, 'shot' : 0}
     totalDrinks = 0
-    for i in range(0, dayNumber+1):
+    for i in range(0, 8):
         currentDate = startDate + datetime.timedelta(days=i)
         currentTS = currentDate.timestamp()
         weeklyDrinks.append(0)
         for night in allNightObjects:
-            if night['dateStart'] <= currentTS and night['dateEnd'] > currentTS:
+            if datetime.datetime.utcfromtimestamp(night['dateStart']) <= currentDate and datetime.datetime.utcfromtimestamp(night['dateEnd']) > currentDate:
                 weeklyDrinks[i] = night['numberOfDrinks']
                 totalDrinks += night['numberOfDrinks']
                 for drink in night['drinkBreakdown']:
