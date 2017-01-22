@@ -218,6 +218,7 @@ def setNight():
     newDrinkTime = time.time()
     tonight['numberOfDrinks'] += 1
     if 'dd_number' in data.keys():
+        tonight['dd_name'] = data['dd_name']
         tonight['dd_number'] = data['dd_number']
     tonight['drinkBreakdown'].append({'drinkType' : newDrinkType, 'drinkTime' : newDrinkTime})
 
@@ -265,7 +266,8 @@ def text_dd():
     if tonight == None or 'dd_number' not in tonight.keys():
         return jsonify({'failure' : 'unable to text dd'})
     dd_number = tonight['dd_number']
-    message = client.messages.create(to=dd_number, from_='+12816728234',body='Your Friend ' + name+ ' is drunk, please keep an eye on them and make sure they get home safe!')
+    dd_name = tonight['dd_name']
+    message = client.messages.create(to=dd_number, from_='+12816728234',body=dd_name +', your Friend ' + name+ ' is drunk, please keep an eye on them and make sure they get home safe!')
     return jsonify({'success' : 'dd texted'})
 
 
