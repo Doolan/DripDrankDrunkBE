@@ -394,7 +394,7 @@ def getWeekData():
     personObject = personTable.find_one({'_id' : personID})
     weekAverage = personObject['weekAverage']
 
-    weekData = {'drinks' : weeklyDrinks, 'breakdown' : breakdown}
+    weekData = {'drinks' : weeklyDrinks, 'breakdown' : breakdown, 'total' : totalDrinks}
     weekAverage = {'drinks' : weekAverage}
 
     return jsonify({'weekData' : weekData, 'weekAverage' : weekAverage})
