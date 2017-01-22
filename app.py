@@ -218,7 +218,7 @@ def getTonightResponse():
         tonight = getTonight(allNightObjects)
 
     for drink in tonight['drinkBreakdown']:
-        drink['drinkTime'] = str(timedate.timedate.utcfromtimestamp(drink['drinkTime']))
+        drink['drinkTime'] = str(datetime.datetime.utcfromtimestamp(drink['drinkTime']))
 
     return jsonify(tonight['drinkBreakdown'])
 
