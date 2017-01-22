@@ -213,7 +213,7 @@ def setNight():
         tonight = createNewNight()
         tonight['personID'] = personID
         nightId = nightTable.insert_one(tonight).inserted_id
-	first = True
+        first = True
     else:
         nightId = tonight['_id']
 
