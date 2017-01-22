@@ -333,11 +333,9 @@ def text_dd():
 #if start date not sent use previous sunday
 #start dates will always be sunday
 # start dates will be sent as year,month,day in parameter timestring
-@app.route('/getWeekData', methods=['POST'])
+@app.route('/getWeekData', methods=['GET'])
 @jwt_required
 def getWeekData():
-    if request.method != 'POST':
-        return jsonify({'failure' : 'incorrect request format'})
 
     data = request.get_json()
     userTable = db.user
@@ -393,7 +391,7 @@ def getWeekData():
     weekData = {'drinks' : weeklyDrinks, 'breakdown' : breakdown}
     weekAverage = {'drinks' : weekAverage}
 
-    return jsonify({'success' : {'weekData' : weekData, 'weekAverage' : weekAverage}})
+    return jsonify({'weekData' : weekData, 'weekAverage' : weekAverage})
     
 
 # @app.route('/jwt_testing')
