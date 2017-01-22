@@ -52,6 +52,7 @@ def normalizeDateTime(dt):
         dayChange = 1
     return (dt - datetime.timedelta(days=dayChange, hours=dt.hour, minutes=dt.minute))  + datetime.timedelta(hours=12,minutes=1)
 
+
 def createNewNight():
     newStartDT = normalizeDateTime(datetime.datetime.utcnow())
     newEndDT = (newStartDT + datetime.timedelta(hours=23, minutes=59))
@@ -188,6 +189,7 @@ def getBio():
 # assuming drinks are valid input
 # TODO do data validation
 @app.route('/setNight', methods=['POST'])
+@cross_origin()
 @jwt_required
 def setNight():
     if request.method != 'POST':
@@ -206,10 +208,12 @@ def setNight():
     # get current time and all night objects associated with a personID. Then uses that data to match a night with today's night if it exists
     allNightObjects = nightTable.find({'personID' : personID})
     tonight = getTonight(allNightObjects)
+    first = False
     if tonight == None:
         tonight = createNewNight()
         tonight['personID'] = personID
         nightId = nightTable.insert_one(tonight).inserted_id
+	first = True
     else:
         nightId = tonight['_id']
 
@@ -224,7 +228,7 @@ def setNight():
 
     nightTable.find_one_and_update({'_id' : nightId}, {'$set' : tonight})
 
-    return jsonify({'success' : 'successfully updated night data'})  
+    return jsonify({'first' : first})  
 
 @app.route('/batch',methods=['POST'])
 def batch():
