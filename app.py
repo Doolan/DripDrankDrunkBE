@@ -76,7 +76,9 @@ def getTonight(nightObjects, currentTime = None):
     if currentTime is None:
         currentTime = datetime.datetime.today()
     for night in nightObjects:
-        if currentTime >= datetime.datetime.utcfromtimestamp(night['dateStart']) and currentTime <= datetime.datetime.utcfromtimestamp(night['dateEnd']):
+       # if currentTime >= datetime.datetime.utcfromtimestamp(night['dateStart'])# and currentTime <= datetime.datetime.utcfromtimestamp(night['dateEnd']):
+       return night
+       if currentTime >= datetime.datetime.utcfromtimestamp(night['dateStart'])
             return night
     return None
 
@@ -248,7 +250,7 @@ def addDD():
     tonight['dd_name'] = data['dd_name']
     tonight['dd_number'] = data['dd_number']
 
-    nightTable.find_one_and_update({'_id' : nightId}, {'$set' : tonight})
+    nightTable.find_one_and_update({'_id' : tonight['nightId']}, {'$set' : tonight})
     return jsonify({"succeeded" : 'woo'})
 
 # adds a new night to db, or updates if already in db
