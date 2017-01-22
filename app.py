@@ -71,8 +71,9 @@ def createNewNight():
 
     return night
 
-def getTonight(nightObjects):
-    currentTime = time.time()
+def getTonight(nightObjects, currentTime = None):
+    if currentTime is None:
+        currentTime = time.time()
     for night in nightObjects:
         if currentTime >= night['dateStart'] and currentTime <= night['dateEnd']:
             return night
@@ -208,7 +209,12 @@ def getTonightResponse():
     personID = userObject['personID']
 
     allNightObjects = nightTable.find({'personID' : personID})
-    tonight = getTonight(allNightObjects)
+
+    data = request.get_json()
+    if 'date' in data.key():
+        tonight = getTonight(allNightObjects, data['date'])
+    else:
+        tonight = getTonight(allNightObjects)
 
     return jsonify(tonight)
 
@@ -333,7 +339,7 @@ def text_dd():
 #if start date not sent use previous sunday
 #start dates will always be sunday
 # start dates will be sent as year,month,day in parameter timestring
-@app.route('/getWeekData', methods=['GET'])
+@app.route('/getWeekData', methods=['POST'])
 @jwt_required
 def getWeekData():
 
@@ -372,7 +378,7 @@ def getWeekData():
     weeklyDrinks = []
     breakdown = {'wine' : 0, 'liquor' : 0, 'beer' : 0, 'mixed' : 0, 'shot' : 0}
     totalDrinks = 0
-    for i in range(0, dayNumber):
+    for i in range(0, dayNumber+1):
         currentDate = startDate + datetime.timedelta(days=i)
         currentTS = currentDate.timestamp()
         weeklyDrinks.append(0)
