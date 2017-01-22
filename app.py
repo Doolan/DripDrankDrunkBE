@@ -74,9 +74,9 @@ def createNewNight():
 
 def getTonight(nightObjects, currentTime = None):
     if currentTime is None:
-        currentTime = time.time()
+        currentTime = datetime.datetime.today()
     for night in nightObjects:
-        if currentTime >= night['dateStart'] and currentTime <= night['dateEnd']:
+        if currentTime >= datetime.datetime.utcfromtimestamp(night['dateStart']) and currentTime <= datetime.datetime.utcfromtimestamp(night['dateEnd']);
             return night
     return None
 
@@ -213,7 +213,11 @@ def getTonightResponse():
 
     data = request.get_json()
     if 'date' in data.keys():
-        tonight = getTonight(allNightObjects, data['date'])
+        timestring = data['date']
+        timearray = timestring.split(',')
+        startDate = datetime.datetime(int(timearray[0]), int(timearray[1]), int(timearray[2]), 12, 1, 0)
+        tonight = getTonight(allNightObjects, startDate)
+        
     else:
         tonight = getTonight(allNightObjects)
 
