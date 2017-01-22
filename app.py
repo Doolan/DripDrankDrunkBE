@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
+from flask_cors import CORS, cross_origin
 import requests
 import json
 import bleach
@@ -12,8 +13,10 @@ from twilio.rest import TwilioRestClient
 import pymongo
 
 app = Flask(__name__)
+CORS(app)
 client = pymongo.MongoClient("mongodb://venerdm:Rose!2@drankonline-shard-00-00-ofd8a.mongodb.net:27017,drankonline-shard-00-01-ofd8a.mongodb.net:27017,drankonline-shard-00-02-ofd8a.mongodb.net:27017/admin?ssl=true&replicaSet=DrankOnline-shard-0&authSource=admin")
 db = client.drink
+
 
 app.debug = True
 app.secret_key = 'secret'
