@@ -200,7 +200,7 @@ def needDD():
 @app.route('/getTonight',methods=['GET'])
 @cross_origin()
 @jwt_required
-def getTonight():
+def getTonightResponse():
     nightTable = db.night
     userTable = db.user
     email = get_jwt_identity()
