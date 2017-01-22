@@ -182,6 +182,60 @@ def getBio():
 
     return jsonify({'height' : height,'sex' : sex,'weight' : weight}), 200
 
+@app.route('/needDD',methods=['GET'])
+@cross_origin()
+@jwt_required
+def needDD():
+    nightTable = db.night
+    userTable = db.user
+    email = get_jwt_identity()
+    userObject = userTable.find_one({'email' : email})
+    personID = userObject['personID']
+
+    allNightObjects = nightTable.find({'personID' : personID})
+    tonight = getTonight(allNightObjects)
+
+    return jsonify({"need" : 'dd_name' in tonight.keys()})
+
+@app.route('/getTonight',methods=['GET'])
+@cross_origin()
+@jwt_required
+def getTonight():
+    nightTable = db.night
+    userTable = db.user
+    email = get_jwt_identity()
+    userObject = userTable.find_one({'email' : email})
+    personID = userObject['personID']
+
+    allNightObjects = nightTable.find({'personID' : personID})
+    tonight = getTonight(allNightObjects)
+
+    return jsonify(tonight)
+
+
+
+
+@app.route('/setDD',methods=['POST'])
+@cross_origin()
+@jwt_required
+def addDD():
+    nightTable = db.night
+    userTable = db.user
+
+    email = get_jwt_identity()
+    userObject = userTable.find_one({'email' : email})
+    personID = userObject['personID']
+
+    data = request.get_json()
+
+    allNightObjects = nightTable.find({'personID' : personID})
+    tonight = getTonight(allNightObjects)
+
+    tonight['dd_name'] = data['dd_name']
+    tonight['dd_number'] = data['dd_number']
+
+    nightTable.find_one_and_update({'_id' : nightId}, {'$set' : tonight})
+    return jsonify({"succeeded" : 'woo'})
 
 # adds a new night to db, or updates if already in db
 # night has personID, date, # of drinks, breakdown of drinks
