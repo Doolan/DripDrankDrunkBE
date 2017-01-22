@@ -76,7 +76,7 @@ def getTonight(nightObjects, currentTime = None):
     if currentTime is None:
         currentTime = datetime.datetime.today()
     for night in nightObjects:
-        if currentTime >= datetime.datetime.utcfromtimestamp(night['dateStart']) and currentTime <= datetime.datetime.utcfromtimestamp(night['dateEnd']);
+        if currentTime >= datetime.datetime.utcfromtimestamp(night['dateStart']) and currentTime <= datetime.datetime.utcfromtimestamp(night['dateEnd']):
             return night
     return None
 
