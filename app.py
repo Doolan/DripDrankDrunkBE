@@ -14,7 +14,7 @@ import pymongo
 
 app = Flask(__name__)
 CORS(app)
-client = pymongo.MongoClient("mongodb://venerdm:Rose!2@drankonline-shard-00-00-ofd8a.mongodb.net:27017,drankonline-shard-00-01-ofd8a.mongodb.net:27017,drankonline-shard-00-02-ofd8a.mongodb.net:27017/admin?ssl=true&replicaSet=DrankOnline-shard-0&authSource=admin")
+client = pymongo.MongoClient("mongodb://venerdm:Rose!2@cluster0-shard-00-00-ofd8a.mongodb.net:27017,cluster0-shard-00-01-ofd8a.mongodb.net:27017,cluster0-shard-00-02-ofd8a.mongodb.net:27017/admin?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin")
 db = client.drink
 
 
